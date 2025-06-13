@@ -1,39 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <style>
-      body {
-        background-color: black;
-        color: white;
-        margin: 0;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-      }
-    </style>
-  </head>
-  <script>
-    const originalAdd = mp.events.add;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Logger</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #eventLogger {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 350px;
+      max-height: 300px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 12px;
+      line-height: 1.3;
+      padding: 10px;
+      overflow-y: auto;
+      border-radius: 5px;
+      box-shadow: 0 0 10px #000;
+      z-index: 9999;
+      user-select: text;
+    }
+  </style>
+</head>
+<body>
 
-    mp.events.add = function (eventName, handler) {
-      const wrappedHandler = function (...args) {
-        mp.gui.chat.push(
-          `[Event Triggered] ${eventName} mit args: ${JSON.stringify(args)}`
-        );
-        try {
-          handler(...args);
-        } catch (e) {
-          mp.gui.chat.push(`[Event Error] ${eventName}: ${e.message}`);
-        }
-      };
-      return originalAdd.call(mp.events, eventName, wrappedHandler);
+<div id="eventLogger"></div>
+
+<script>
+  const logger = document.getElementById('eventLogger');
+
+  function logEvent(text) {
+    const entry = document.createElement('div');
+    entry.textContent = text;
+    logger.appendChild(entry);
+    // Scroll to bottom on new entry
+    logger.scrollTop = logger.scrollHeight;
+
+    // Optional: Limit number of log entries to avoid overload
+    if (logger.childElementCount > 100) {
+      logger.removeChild(logger.firstChild);
+    }
+  }
+
+  const originalAdd = mp.events.add;
+
+  mp.events.add = function(eventName, handler) {
+    const wrappedHandler = function(...args) {
+      logEvent(`[Event Triggered] ${eventName} mit args: ${JSON.stringify(args)}`);
+      try {
+        handler(...args);
+      } catch (e) {
+        logEvent(`[Event Error] ${eventName}: ${e.message}`);
+      }
     };
-  </script>
-  <body>
-    <div>
-      <h1>Injected</h1>
-    </div>
-  </body>
+    return originalAdd.call(mp.events, eventName, wrappedHandler);
+  };
+</script>
+
+</body>
 </html>
